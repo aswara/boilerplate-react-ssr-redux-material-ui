@@ -1,4 +1,29 @@
+# Create React App Server Side Rendering
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+
+Server-side rendering with create-react-app without ejecting inspired from [cra-ssr](https://github.com/cereallarceny/cra-ssr)
+
+## Features
+- Create React App without ejecting
+- Material UI with SSR
+- React JSS
+- Redux
+- Redux Promise Middleware
+- React Router v4
+- Full SEO support via React Helmet
+- Preloaded page data via async/await and React Frontload
+- Code splitting via React Loadable
+- Server-side cookie support
+
+## Setup
+
+1. Clone the repo
+2. `$ cd boilerplate-react-ssr-redux-material-ui
+3. Run `$ yarn` or `npm install`
+4. Run locally `$ yarn start` or `npm start`
+5. Production `npm run build`
+6. Run `npm run serve`
 
 ## Available Scripts
 
