@@ -4,7 +4,7 @@ import compression from 'compression';
 import express from 'express';
 import morgan from 'morgan';
 import path from 'path';
-import forceDomain from 'forcedomain';
+// import forceDomain from 'forcedomain';
 import Loadable from 'react-loadable';
 import cookieParser from 'cookie-parser';
 
@@ -48,7 +48,10 @@ app.use(loader);
 
 // We tell React Loadable to load all required assets and start listening - ROCK AND ROLL!
 Loadable.preloadAll().then(() => {
-  app.listen(PORT, console.log(`App listening on port ${PORT}!`));
+  // app.listen(PORT, console.log(`App listening on port ${PORT}!`));
+  app.listen(3000, '0.0.0.0', function () {
+    console.log('Listening to port:  ' + 3000);
+  });
 });
 
 // Handle the bugs somehow

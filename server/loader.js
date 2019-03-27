@@ -10,14 +10,25 @@ import { Provider } from 'react-redux';
 import { StaticRouter } from 'react-router';
 import { Frontload, frontloadServerRender } from 'react-frontload';
 import Loadable from 'react-loadable';
+import { SheetsRegistry } from 'jss';
+import JssProvider from 'react-jss/lib/JssProvider';
+import {
+  MuiThemeProvider,
+  createMuiTheme,
+  createGenerateClassName,
+} from '@material-ui/core/styles';
+import green from '@material-ui/core/colors/green';
+import red from '@material-ui/core/colors/red';
 
 // Our store, entrypoint, and manifest
-import createStore from '../src/store';
-import App from '../src/app/app';
+import createStore from '../src/services/redux/store';
+import App from '../src/App';
 import manifest from '../build/asset-manifest.json';
+import {themePalette } from '../src/utils/themePalette';
+import { changeThemeAction } from '../src/services/actions';
 
 // Some optional Redux functions related to user authentication
-import { setCurrentUser, logoutUser } from '../src/modules/auth';
+// import { setCurrentUser, logoutUser } from '../src/modules/auth';
 
 // LOADER
 export default (req, res) => {
@@ -28,10 +39,10 @@ export default (req, res) => {
       - Preloaded state (for Redux) depending on the current route
       - Code-split script tags depending on the current route
   */
-  const injectHTML = (data, { html, title, meta, body, scripts, state }) => {
+  const injectHTML = (data, { html, title, meta, body, scripts, state, css }) => {
     data = data.replace('<html>', `<html ${html}>`);
     data = data.replace(/<title>.*?<\/title>/g, title);
-    data = data.replace('</head>', `${meta}</head>`);
+    data = data.replace('</head>', `${meta} <style id="jss-server-side">${css}</style></head>`);
     data = data.replace(
       '<div id="root"></div>',
       `<div id="root">${body}</div><script>window.__PRELOADED_STATE__ = ${state}</script>`
@@ -58,14 +69,27 @@ export default (req, res) => {
 
       // If the user has a cookie (i.e. they're signed in) - set them as the current user
       // Otherwise, we want to set the current state to be logged out, just in case this isn't the default
-      if ('mywebsite' in req.cookies) {
-        store.dispatch(setCurrentUser(req.cookies.mywebsite));
+      if ('theme' in req.cookies) {
+        store.dispatch(changeThemeAction(req.cookies.theme));
       } else {
-        store.dispatch(logoutUser());
+        
       }
+
 
       const context = {};
       const modules = [];
+
+      // Create a sheetsRegistry instance.
+      const sheetsRegistry = new SheetsRegistry();
+
+      // Create a sheetsManager instance.
+      const sheetsManager = new Map();
+
+      // Create a theme instance.
+      const theme = store.getState().settings.theme;
+      const muiTheme = createMuiTheme(themePalette[theme])
+      // Create a new class name generator.
+      const generateClassName = createGenerateClassName();
 
       /*
         Here's the core funtionality of this file. We do the following in specific order (inside-out):
@@ -87,7 +111,11 @@ export default (req, res) => {
             <Provider store={store}>
               <StaticRouter location={req.url} context={context}>
                 <Frontload isServer={true}>
-                  <App />
+                  <JssProvider registry={sheetsRegistry} generateClassName={generateClassName}>
+                    <MuiThemeProvider theme={muiTheme} sheetsManager={sheetsManager}>
+                      <App />
+                    </MuiThemeProvider>
+                  </JssProvider>
                 </Frontload>
               </StaticRouter>
             </Provider>
@@ -122,6 +150,9 @@ export default (req, res) => {
           // Let's output the title, just to see SSR is working as intended
           console.log('THE TITLE', helmet.title.toString());
 
+          // Grab the CSS from our sheetsRegistry.
+          const css = sheetsRegistry.toString()
+
           // Pass all this nonsense into our HTML formatting function above
           const html = injectHTML(htmlData, {
             html: helmet.htmlAttributes.toString(),
@@ -129,8 +160,11 @@ export default (req, res) => {
             meta: helmet.meta.toString(),
             body: routeMarkup,
             scripts: extraChunks,
-            state: JSON.stringify(store.getState()).replace(/</g, '\\u003c')
+            state: JSON.stringify(store.getState()).replace(/</g, '\\u003c'),
+            css: css
           });
+
+
 
           // We have all the final HTML, let's send it to the user already!
           res.send(html);

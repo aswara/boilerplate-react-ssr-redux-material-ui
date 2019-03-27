@@ -1,28 +1,31 @@
 import React, { Component } from 'react';
-import logo from './logo.svg';
-import './App.css';
+import { MuiThemeProvider, createMuiTheme } from '@material-ui/core/styles';
+import Pages from './pages';
+import { connect } from 'react-redux';
+import { themePalette } from './utils/themePalette';
 
 class App extends Component {
   render() {
+    const { settings } = this.props
+    const { theme } = settings
+    const muiTheme = createMuiTheme(themePalette[theme])
     return (
-      <div className="App">
-        <header className="App-header">
-          <img src={logo} className="App-logo" alt="logo" />
-          <p>
-            Edit <code>src/App.js</code> and save to reload.
-          </p>
-          <a
-            className="App-link"
-            href="https://reactjs.org"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Learn React
-          </a>
-        </header>
-      </div>
+        <Pages />
     );
   }
 }
 
-export default App;
+const mapStateToProps = state => ({
+  settings: state.settings
+});
+
+const dispatchToProps = dispatch => ({
+  
+});
+
+const AppMapped = connect(
+  mapStateToProps,
+  dispatchToProps
+)(App);
+
+export default AppMapped;
